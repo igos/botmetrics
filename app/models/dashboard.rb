@@ -4,6 +4,7 @@ class Dashboard < ActiveRecord::Base
   DEFAULT_SLACK_DASHBOARDS    = %w(bots-installed followed-link bots-uninstalled new-users messages messages-to-bot messages-from-bot)
   DEFAULT_FACEBOOK_DASHBOARDS = %w(new-users followed-link messages-to-bot messages-from-bot user-actions image-uploaded audio-uploaded video-uploaded file-uploaded location-sent)
   DEFAULT_KIK_DASHBOARDS      = %w(new-users followed-link messages-to-bot messages-from-bot image-uploaded video-uploaded link-uploaded scanned-data sticker-uploaded friend-picker-chosen)
+  DEFAULT_FIRST_OPINION_DASHBOARDS      = %w(new-users messages-to-bot messages-from-bot)
 
   validates_presence_of :name, :bot_id, :user_id, :provider, :dashboard_type
   validates_presence_of :event_type, if: Proc.new { |d| d.dashboard_type != 'custom' }

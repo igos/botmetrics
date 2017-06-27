@@ -2,7 +2,7 @@ class Query < ActiveRecord::Base
   belongs_to :query_set
 
   validates_presence_of  :provider
-  validates_inclusion_of :provider, in: %w(slack kik facebook telegram)
+  validates_inclusion_of :provider, in: %w(slack kik facebook telegram first_opinion)
 
   validates_presence_of  :field
   validates_inclusion_of :field,  in: ->(query) { query.fields(query.query_set.bot).keys }

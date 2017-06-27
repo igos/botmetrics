@@ -5,9 +5,10 @@ class BotInstance < ActiveRecord::Base
   has_many :messages
   has_many :short_links
 
-  validates_presence_of :token, :bot_id, :provider
-  validates_uniqueness_of :token
-  validates_inclusion_of  :provider, in: %w(slack kik facebook telegram)
+  validates_presence_of :bot_id, :provider
+  validates_presence_of :token, if: proc { provider != 'first_opinion' }
+  validates_uniqueness_of :token, if: proc { provider != 'first_opinion' }
+  validates_inclusion_of  :provider, in: %w(slack kik facebook telegram first_opinion)
   validates_inclusion_of  :state, in: %w(pending enabled disabled)
 
   validates_presence_of :uid, if: Proc.new { |bi| bi.state == 'enabled' }

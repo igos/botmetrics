@@ -2,11 +2,12 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 9.5.5
--- Dumped by pg_dump version 9.5.5
+-- Dumped from database version 9.5.1
+-- Dumped by pg_dump version 9.6.1
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
@@ -208,7 +209,7 @@ ALTER SEQUENCE bot_collaborators_id_seq OWNED BY bot_collaborators.id;
 
 CREATE TABLE bot_instances (
     id integer NOT NULL,
-    token character varying NOT NULL,
+    token character varying,
     uid character varying,
     bot_id integer NOT NULL,
     created_at timestamp without time zone NOT NULL,
@@ -216,7 +217,8 @@ CREATE TABLE bot_instances (
     provider character varying NOT NULL,
     state character varying DEFAULT 'pending'::character varying NOT NULL,
     instance_attributes jsonb DEFAULT '{}'::jsonb NOT NULL,
-    CONSTRAINT valid_provider_on_bot_instances CHECK ((((provider)::text = 'slack'::text) OR ((provider)::text = 'kik'::text) OR ((provider)::text = 'facebook'::text) OR ((provider)::text = 'telegram'::text))),
+    CONSTRAINT not_null_token_on_bot_instances CHECK (((((provider)::text = ANY ((ARRAY['slack'::character varying, 'kik'::character varying, 'facebook'::character varying, 'telegram'::character varying])::text[])) AND (token IS NOT NULL)) OR ((provider)::text = 'first_opinion'::text))),
+    CONSTRAINT valid_provider_on_bot_instances CHECK ((((provider)::text = 'slack'::text) OR ((provider)::text = 'kik'::text) OR ((provider)::text = 'facebook'::text) OR ((provider)::text = 'telegram'::text) OR ((provider)::text = 'first_opinion'::text))),
     CONSTRAINT validate_attributes_name CHECK (((((instance_attributes ->> 'name'::text) IS NOT NULL) AND (length((instance_attributes ->> 'name'::text)) > 0) AND ((provider)::text = 'facebook'::text) AND ((state)::text = 'enabled'::text)) OR (((state)::text = 'pending'::text) AND (instance_attributes IS NOT NULL)) OR (((state)::text = 'disabled'::text) AND (instance_attributes IS NOT NULL)) OR ((provider)::text <> 'facebook'::text)))
 );
 
@@ -255,7 +257,7 @@ CREATE TABLE bot_users (
     provider character varying NOT NULL,
     last_interacted_with_bot_at timestamp without time zone,
     bot_interaction_count integer DEFAULT 0 NOT NULL,
-    CONSTRAINT valid_provider_on_bot_users CHECK ((((provider)::text = 'slack'::text) OR ((provider)::text = 'kik'::text) OR ((provider)::text = 'facebook'::text) OR ((provider)::text = 'telegram'::text)))
+    CONSTRAINT valid_provider_on_bot_users CHECK ((((provider)::text = 'slack'::text) OR ((provider)::text = 'kik'::text) OR ((provider)::text = 'facebook'::text) OR ((provider)::text = 'telegram'::text) OR ((provider)::text = 'first_opinion'::text)))
 );
 
 
@@ -294,7 +296,7 @@ CREATE TABLE bots (
     webhooks_enabled boolean DEFAULT false NOT NULL,
     first_received_event_at timestamp without time zone,
     enabled boolean DEFAULT true NOT NULL,
-    CONSTRAINT valid_provider_on_bots CHECK ((((provider)::text = 'slack'::text) OR ((provider)::text = 'kik'::text) OR ((provider)::text = 'facebook'::text) OR ((provider)::text = 'telegram'::text)))
+    CONSTRAINT valid_provider_on_bots CHECK ((((provider)::text = 'slack'::text) OR ((provider)::text = 'kik'::text) OR ((provider)::text = 'facebook'::text) OR ((provider)::text = 'telegram'::text) OR ((provider)::text = 'first_opinion'::text)))
 );
 
 
@@ -370,8 +372,8 @@ CREATE TABLE dashboards (
     query_options jsonb,
     CONSTRAINT check_if_event_type_is_null CHECK ((((event_type IS NOT NULL) AND ((dashboard_type)::text <> 'custom'::text)) OR ((dashboard_type)::text = 'custom'::text))),
     CONSTRAINT regex_not_null_when_dashboard_type_custom CHECK (((((dashboard_type)::text = 'custom'::text) AND ((regex IS NOT NULL) AND ((regex)::text <> ''::text))) OR ((dashboard_type)::text <> 'custom'::text))),
-    CONSTRAINT valid_dashboard_type_on_dashboards CHECK (((((provider)::text = 'slack'::text) AND (((dashboard_type)::text = 'bots-installed'::text) OR ((dashboard_type)::text = 'bots-uninstalled'::text) OR ((dashboard_type)::text = 'new-users'::text) OR ((dashboard_type)::text = 'messages'::text) OR ((dashboard_type)::text = 'messages-to-bot'::text) OR ((dashboard_type)::text = 'messages-from-bot'::text) OR ((dashboard_type)::text = 'followed-link'::text) OR ((dashboard_type)::text = 'custom'::text))) OR (((provider)::text = 'facebook'::text) AND (((dashboard_type)::text = 'new-users'::text) OR ((dashboard_type)::text = 'messages-to-bot'::text) OR ((dashboard_type)::text = 'messages-from-bot'::text) OR ((dashboard_type)::text = 'user-actions'::text) OR ((dashboard_type)::text = 'get-started'::text) OR ((dashboard_type)::text = 'image-uploaded'::text) OR ((dashboard_type)::text = 'audio-uploaded'::text) OR ((dashboard_type)::text = 'video-uploaded'::text) OR ((dashboard_type)::text = 'file-uploaded'::text) OR ((dashboard_type)::text = 'location-sent'::text) OR ((dashboard_type)::text = 'followed-link'::text) OR ((dashboard_type)::text = 'custom'::text))) OR (((provider)::text = 'kik'::text) AND (((dashboard_type)::text = 'new-users'::text) OR ((dashboard_type)::text = 'messages-to-bot'::text) OR ((dashboard_type)::text = 'messages-from-bot'::text) OR ((dashboard_type)::text = 'image-uploaded'::text) OR ((dashboard_type)::text = 'link-uploaded'::text) OR ((dashboard_type)::text = 'video-uploaded'::text) OR ((dashboard_type)::text = 'scanned-data'::text) OR ((dashboard_type)::text = 'sticker-uploaded'::text) OR ((dashboard_type)::text = 'friend-picker-chosen'::text) OR ((dashboard_type)::text = 'followed-link'::text) OR ((dashboard_type)::text = 'custom'::text))) OR ((provider)::text = 'telegram'::text))),
-    CONSTRAINT valid_provider_on_dashboards CHECK ((((provider)::text = 'slack'::text) OR ((provider)::text = 'kik'::text) OR ((provider)::text = 'facebook'::text) OR ((provider)::text = 'telegram'::text)))
+    CONSTRAINT valid_dashboard_type_on_dashboards CHECK (((((provider)::text = 'slack'::text) AND (((dashboard_type)::text = 'bots-installed'::text) OR ((dashboard_type)::text = 'bots-uninstalled'::text) OR ((dashboard_type)::text = 'new-users'::text) OR ((dashboard_type)::text = 'messages'::text) OR ((dashboard_type)::text = 'messages-to-bot'::text) OR ((dashboard_type)::text = 'messages-from-bot'::text) OR ((dashboard_type)::text = 'followed-link'::text) OR ((dashboard_type)::text = 'custom'::text))) OR (((provider)::text = 'facebook'::text) AND (((dashboard_type)::text = 'new-users'::text) OR ((dashboard_type)::text = 'messages-to-bot'::text) OR ((dashboard_type)::text = 'messages-from-bot'::text) OR ((dashboard_type)::text = 'user-actions'::text) OR ((dashboard_type)::text = 'get-started'::text) OR ((dashboard_type)::text = 'image-uploaded'::text) OR ((dashboard_type)::text = 'audio-uploaded'::text) OR ((dashboard_type)::text = 'video-uploaded'::text) OR ((dashboard_type)::text = 'file-uploaded'::text) OR ((dashboard_type)::text = 'location-sent'::text) OR ((dashboard_type)::text = 'followed-link'::text) OR ((dashboard_type)::text = 'custom'::text))) OR (((provider)::text = 'kik'::text) AND (((dashboard_type)::text = 'new-users'::text) OR ((dashboard_type)::text = 'messages-to-bot'::text) OR ((dashboard_type)::text = 'messages-from-bot'::text) OR ((dashboard_type)::text = 'image-uploaded'::text) OR ((dashboard_type)::text = 'link-uploaded'::text) OR ((dashboard_type)::text = 'video-uploaded'::text) OR ((dashboard_type)::text = 'scanned-data'::text) OR ((dashboard_type)::text = 'sticker-uploaded'::text) OR ((dashboard_type)::text = 'friend-picker-chosen'::text) OR ((dashboard_type)::text = 'followed-link'::text) OR ((dashboard_type)::text = 'custom'::text))) OR (((provider)::text = 'first_opinion'::text) AND (((dashboard_type)::text = 'new-users'::text) OR ((dashboard_type)::text = 'messages-to-bot'::text) OR ((dashboard_type)::text = 'messages-from-bot'::text) OR ((dashboard_type)::text = 'custom'::text))) OR ((provider)::text = 'telegram'::text))),
+    CONSTRAINT valid_provider_on_dashboards CHECK ((((provider)::text = 'slack'::text) OR ((provider)::text = 'kik'::text) OR ((provider)::text = 'facebook'::text) OR ((provider)::text = 'telegram'::text) OR ((provider)::text = 'first_opinion'::text)))
 );
 
 
@@ -413,14 +415,15 @@ CREATE TABLE events (
     text text,
     has_been_delivered boolean DEFAULT false,
     has_been_read boolean DEFAULT false,
-    CONSTRAINT valid_event_type_on_events CHECK (((((event_type)::text = ANY (ARRAY[('user-added'::character varying)::text, ('followed-link'::character varying)::text, ('bot-installed'::character varying)::text, ('bot_disabled'::character varying)::text, ('added_to_channel'::character varying)::text, ('message'::character varying)::text, ('message_reaction'::character varying)::text])) AND ((provider)::text = 'slack'::text)) OR (((event_type)::text = ANY (ARRAY[('user-added'::character varying)::text, ('followed-link'::character varying)::text, ('message'::character varying)::text, ('messaging_postbacks'::character varying)::text, ('messaging_optins'::character varying)::text, ('account_linking'::character varying)::text, ('messaging_referrals'::character varying)::text, ('message:image-uploaded'::character varying)::text, ('message:audio-uploaded'::character varying)::text, ('message:video-uploaded'::character varying)::text, ('message:file-uploaded'::character varying)::text, ('message:location-sent'::character varying)::text])) AND ((provider)::text = 'facebook'::text) AND (bot_user_id IS NOT NULL)) OR (((event_type)::text = ANY (ARRAY[('user-added'::character varying)::text, ('followed-link'::character varying)::text, ('message'::character varying)::text, ('message:image-uploaded'::character varying)::text, ('message:video-uploaded'::character varying)::text, ('message:link-uploaded'::character varying)::text, ('message:scanned-data'::character varying)::text, ('message:sticker-uploaded'::character varying)::text, ('message:friend-picker-chosen'::character varying)::text, ('message:is-typing'::character varying)::text, ('message:start-chatting'::character varying)::text])) AND ((provider)::text = 'kik'::text) AND (bot_user_id IS NOT NULL)))),
+    CONSTRAINT valid_event_type_on_events CHECK (((((event_type)::text = ANY ((ARRAY['user-added'::character varying, 'followed-link'::character varying, 'bot-installed'::character varying, 'bot_disabled'::character varying, 'added_to_channel'::character varying, 'message'::character varying, 'message_reaction'::character varying])::text[])) AND ((provider)::text = 'slack'::text)) OR (((event_type)::text = ANY ((ARRAY['user-added'::character varying, 'followed-link'::character varying, 'message'::character varying, 'messaging_postbacks'::character varying, 'messaging_optins'::character varying, 'account_linking'::character varying, 'messaging_referrals'::character varying, 'message:image-uploaded'::character varying, 'message:audio-uploaded'::character varying, 'message:video-uploaded'::character varying, 'message:file-uploaded'::character varying, 'message:location-sent'::character varying])::text[])) AND ((provider)::text = 'facebook'::text) AND (bot_user_id IS NOT NULL)) OR (((event_type)::text = ANY ((ARRAY['user-added'::character varying, 'followed-link'::character varying, 'message'::character varying, 'message:image-uploaded'::character varying, 'message:video-uploaded'::character varying, 'message:link-uploaded'::character varying, 'message:scanned-data'::character varying, 'message:sticker-uploaded'::character varying, 'message:friend-picker-chosen'::character varying, 'message:is-typing'::character varying, 'message:start-chatting'::character varying])::text[])) AND ((provider)::text = 'kik'::text) AND (bot_user_id IS NOT NULL)) OR (((event_type)::text = ANY ((ARRAY['user-added'::character varying, 'message'::character varying])::text[])) AND ((provider)::text = 'first_opinion'::text) AND (bot_user_id IS NOT NULL)))),
     CONSTRAINT valid_provider_on_events CHECK ((((provider)::text = 'slack'::text) OR ((provider)::text = 'kik'::text) OR ((provider)::text = 'facebook'::text) OR ((provider)::text = 'telegram'::text))),
-    CONSTRAINT validate_attributes_channel CHECK (((((event_attributes ->> 'channel'::text) IS NOT NULL) AND (length((event_attributes ->> 'channel'::text)) > 0) AND ((provider)::text = 'slack'::text) AND (((event_type)::text = 'message'::text) OR ((event_type)::text = 'message_reaction'::text))) OR (((provider)::text = 'slack'::text) AND (((event_type)::text <> 'message'::text) AND ((event_type)::text <> 'message_reaction'::text)) AND (event_attributes IS NOT NULL)) OR ((provider)::text = ANY (ARRAY[('facebook'::character varying)::text, ('kik'::character varying)::text])))),
-    CONSTRAINT validate_attributes_id CHECK (((((event_attributes ->> 'id'::text) IS NOT NULL) AND (length((event_attributes ->> 'id'::text)) > 0) AND ((provider)::text = 'kik'::text)) OR ((provider)::text = ANY ((ARRAY['facebook'::character varying, 'slack'::character varying, 'kik'::character varying])::text[])))),
-    CONSTRAINT validate_attributes_mid CHECK (((((event_attributes ->> 'mid'::text) IS NOT NULL) AND (length((event_attributes ->> 'mid'::text)) > 0) AND ((provider)::text = 'facebook'::text) AND ((event_type)::text = 'message'::text)) OR (((provider)::text = 'facebook'::text) AND ((event_type)::text <> 'message'::text) AND (event_attributes IS NOT NULL)) OR ((provider)::text = ANY (ARRAY[('slack'::character varying)::text, ('kik'::character varying)::text])))),
-    CONSTRAINT validate_attributes_reaction CHECK (((((event_attributes ->> 'reaction'::text) IS NOT NULL) AND (length((event_attributes ->> 'reaction'::text)) > 0) AND ((provider)::text = 'slack'::text) AND ((event_type)::text = 'message_reaction'::text)) OR (((provider)::text = 'slack'::text) AND ((event_type)::text <> 'message_reaction'::text) AND (event_attributes IS NOT NULL)) OR ((provider)::text = ANY (ARRAY[('facebook'::character varying)::text, ('kik'::character varying)::text])))),
-    CONSTRAINT validate_attributes_seq CHECK (((((event_attributes ->> 'seq'::text) IS NOT NULL) AND (length((event_attributes ->> 'seq'::text)) > 0) AND ((provider)::text = 'facebook'::text) AND ((event_type)::text = 'message'::text)) OR (((provider)::text = 'facebook'::text) AND ((event_type)::text <> 'message'::text) AND (event_attributes IS NOT NULL)) OR ((provider)::text = ANY (ARRAY[('slack'::character varying)::text, ('kik'::character varying)::text])))),
-    CONSTRAINT validate_attributes_timestamp CHECK (((((event_attributes ->> 'timestamp'::text) IS NOT NULL) AND (length((event_attributes ->> 'timestamp'::text)) > 0) AND ((provider)::text = 'slack'::text) AND (((event_type)::text = 'message'::text) OR ((event_type)::text = 'message_reaction'::text))) OR (((provider)::text = 'slack'::text) AND (((event_type)::text <> 'message'::text) AND ((event_type)::text <> 'message_reaction'::text)) AND (event_attributes IS NOT NULL)) OR ((provider)::text = ANY (ARRAY[('facebook'::character varying)::text, ('kik'::character varying)::text]))))
+    CONSTRAINT validate_attributes_channel CHECK (((((event_attributes ->> 'channel'::text) IS NOT NULL) AND (length((event_attributes ->> 'channel'::text)) > 0) AND ((provider)::text = 'slack'::text) AND (((event_type)::text = 'message'::text) OR ((event_type)::text = 'message_reaction'::text))) OR (((provider)::text = 'slack'::text) AND (((event_type)::text <> 'message'::text) AND ((event_type)::text <> 'message_reaction'::text)) AND (event_attributes IS NOT NULL)) OR ((provider)::text = ANY ((ARRAY['facebook'::character varying, 'kik'::character varying, 'first_opinion'::character varying])::text[])))),
+    CONSTRAINT validate_attributes_id CHECK (((((event_attributes ->> 'id'::text) IS NOT NULL) AND (length((event_attributes ->> 'id'::text)) > 0) AND ((provider)::text = ANY ((ARRAY['kik'::character varying, 'first_opinion'::character varying])::text[]))) OR ((provider)::text = ANY ((ARRAY['facebook'::character varying, 'slack'::character varying, 'kik'::character varying])::text[])))),
+    CONSTRAINT validate_attributes_mid CHECK (((((event_attributes ->> 'mid'::text) IS NOT NULL) AND (length((event_attributes ->> 'mid'::text)) > 0) AND ((provider)::text = 'facebook'::text) AND ((event_type)::text = 'message'::text)) OR (((provider)::text = 'facebook'::text) AND ((event_type)::text <> 'message'::text) AND (event_attributes IS NOT NULL)) OR ((provider)::text = ANY ((ARRAY['slack'::character varying, 'kik'::character varying, 'first_opinion'::character varying])::text[])))),
+    CONSTRAINT validate_attributes_reaction CHECK (((((event_attributes ->> 'reaction'::text) IS NOT NULL) AND (length((event_attributes ->> 'reaction'::text)) > 0) AND ((provider)::text = 'slack'::text) AND ((event_type)::text = 'message_reaction'::text)) OR (((provider)::text = 'slack'::text) AND ((event_type)::text <> 'message_reaction'::text) AND (event_attributes IS NOT NULL)) OR ((provider)::text = ANY ((ARRAY['facebook'::character varying, 'kik'::character varying, 'first_opinion'::character varying])::text[])))),
+    CONSTRAINT validate_attributes_seq CHECK (((((event_attributes ->> 'seq'::text) IS NOT NULL) AND (length((event_attributes ->> 'seq'::text)) > 0) AND ((provider)::text = 'facebook'::text) AND ((event_type)::text = 'message'::text)) OR (((provider)::text = 'facebook'::text) AND ((event_type)::text <> 'message'::text) AND (event_attributes IS NOT NULL)) OR ((provider)::text = ANY ((ARRAY['slack'::character varying, 'kik'::character varying, 'first_opinion'::character varying])::text[])))),
+    CONSTRAINT validate_attributes_sub_type CHECK (((((event_attributes ->> 'sub_type'::text) IS NOT NULL) AND (length((event_attributes ->> 'sub_type'::text)) > 0) AND ((event_attributes ->> 'sub_type'::text) = ANY (ARRAY['text'::text, 'link'::text, 'picture'::text, 'video'::text, 'start-chatting'::text, 'scan-data'::text, 'sticker'::text, 'is-typing'::text, 'friend-picker'::text])) AND ((provider)::text = 'kik'::text) AND ((event_type)::text = 'message'::text)) OR ((provider)::text = ANY ((ARRAY['facebook'::character varying, 'slack'::character varying, 'first_opinion'::character varying])::text[])))),
+    CONSTRAINT validate_attributes_timestamp CHECK (((((event_attributes ->> 'timestamp'::text) IS NOT NULL) AND (length((event_attributes ->> 'timestamp'::text)) > 0) AND ((provider)::text = 'slack'::text) AND (((event_type)::text = 'message'::text) OR ((event_type)::text = 'message_reaction'::text))) OR (((provider)::text = 'slack'::text) AND (((event_type)::text <> 'message'::text) AND ((event_type)::text <> 'message_reaction'::text)) AND (event_attributes IS NOT NULL)) OR ((provider)::text = ANY ((ARRAY['facebook'::character varying, 'kik'::character varying, 'first_opinion'::character varying])::text[]))))
 );
 
 
@@ -496,8 +499,8 @@ CREATE TABLE messages (
     notification_id integer,
     scheduled_at timestamp without time zone,
     sent_at timestamp without time zone,
-    CONSTRAINT validate_attributes_channel_user CHECK (((((provider)::text = 'slack'::text) AND ((message_attributes ->> 'channel'::text) IS NOT NULL) AND (length((message_attributes ->> 'channel'::text)) > 0) AND ((message_attributes ->> 'user'::text) IS NULL)) OR ((((provider)::text = 'slack'::text) OR ((provider)::text = 'facebook'::text) OR ((provider)::text = 'kik'::text)) AND ((message_attributes ->> 'user'::text) IS NOT NULL) AND (length((message_attributes ->> 'user'::text)) > 0) AND ((message_attributes ->> 'channel'::text) IS NULL)))),
-    CONSTRAINT validate_attributes_team_id CHECK (((((provider)::text = 'slack'::text) AND ((message_attributes ->> 'team_id'::text) IS NOT NULL) AND (length((message_attributes ->> 'team_id'::text)) > 0)) OR ((provider)::text = 'facebook'::text) OR ((provider)::text = 'kik'::text)))
+    CONSTRAINT validate_attributes_channel_user CHECK (((((provider)::text = 'slack'::text) AND ((message_attributes ->> 'channel'::text) IS NOT NULL) AND (length((message_attributes ->> 'channel'::text)) > 0) AND ((message_attributes ->> 'user'::text) IS NULL)) OR ((((provider)::text = 'slack'::text) OR ((provider)::text = 'facebook'::text) OR ((provider)::text = 'kik'::text) OR ((provider)::text = 'first_opinion'::text)) AND ((message_attributes ->> 'user'::text) IS NOT NULL) AND (length((message_attributes ->> 'user'::text)) > 0) AND ((message_attributes ->> 'channel'::text) IS NULL)))),
+    CONSTRAINT validate_attributes_team_id CHECK (((((provider)::text = 'slack'::text) AND ((message_attributes ->> 'team_id'::text) IS NOT NULL) AND (length((message_attributes ->> 'team_id'::text)) > 0)) OR ((provider)::text = 'facebook'::text) OR ((provider)::text = 'kik'::text) OR ((provider)::text = 'first_opinion'::text)))
 );
 
 
@@ -570,8 +573,8 @@ CREATE TABLE queries (
     min_value character varying,
     max_value character varying,
     provider character varying NOT NULL,
-    CONSTRAINT validate_field CHECK (((((provider)::text = 'slack'::text) AND (((field)::text = 'nickname'::text) OR ((field)::text = 'email'::text) OR ((field)::text = 'full_name'::text) OR ((field)::text = 'interaction_count'::text) OR ((field)::text = 'interacted_at'::text) OR ((field)::text = 'user_created_at'::text) OR ((field)::text = 'followed_link'::text) OR ((field)::text ~~ 'dashboard:%'::text))) OR (((provider)::text = 'facebook'::text) AND (((field)::text = 'first_name'::text) OR ((field)::text = 'last_name'::text) OR ((field)::text = 'gender'::text) OR ((field)::text = 'interaction_count'::text) OR ((field)::text = 'interacted_at'::text) OR ((field)::text = 'user_created_at'::text) OR ((field)::text = 'followed_link'::text) OR ((field)::text ~~ 'dashboard:%'::text))) OR (((provider)::text = 'kik'::text) AND (((field)::text = 'first_name'::text) OR ((field)::text = 'last_name'::text) OR ((field)::text = 'interaction_count'::text) OR ((field)::text = 'interacted_at'::text) OR ((field)::text = 'user_created_at'::text) OR ((field)::text = 'followed_link'::text) OR ((field)::text ~~ 'dashboard:%'::text))))),
-    CONSTRAINT validate_method CHECK (((((provider)::text = 'slack'::text) AND (((field)::text = 'nickname'::text) OR ((field)::text = 'email'::text) OR ((field)::text = 'full_name'::text) OR ((field)::text = 'followed_link'::text)) AND (((method)::text = 'equals_to'::text) OR ((method)::text = 'contains'::text))) OR ((((provider)::text = 'facebook'::text) OR ((provider)::text = 'kik'::text)) AND (((field)::text = 'first_name'::text) OR ((field)::text = 'last_name'::text) OR ((field)::text = 'followed_link'::text)) AND (((method)::text = 'equals_to'::text) OR ((method)::text = 'contains'::text))) OR (((provider)::text = 'facebook'::text) AND ((field)::text = 'gender'::text) AND (((method)::text = 'equals_to'::text) OR ((method)::text = 'contains'::text))) OR ((((provider)::text = 'slack'::text) OR ((provider)::text = 'facebook'::text) OR ((provider)::text = 'kik'::text)) AND ((field)::text = 'interaction_count'::text) AND (((method)::text = 'equals_to'::text) OR ((method)::text = 'between'::text) OR ((method)::text = 'greater_than'::text) OR ((method)::text = 'lesser_than'::text))) OR ((((provider)::text = 'slack'::text) OR ((provider)::text = 'facebook'::text) OR ((provider)::text = 'kik'::text)) AND (((field)::text = 'interacted_at'::text) OR ((field)::text = 'user_created_at'::text) OR ((field)::text ~~ 'dashboard:%'::text)) AND (((method)::text = 'between'::text) OR ((method)::text = 'greater_than'::text) OR ((method)::text = 'lesser_than'::text)))))
+    CONSTRAINT validate_field CHECK (((((provider)::text = 'slack'::text) AND (((field)::text = 'nickname'::text) OR ((field)::text = 'email'::text) OR ((field)::text = 'full_name'::text) OR ((field)::text = 'interaction_count'::text) OR ((field)::text = 'interacted_at'::text) OR ((field)::text = 'user_created_at'::text) OR ((field)::text = 'followed_link'::text) OR ((field)::text ~~ 'dashboard:%'::text))) OR (((provider)::text = 'facebook'::text) AND (((field)::text = 'first_name'::text) OR ((field)::text = 'last_name'::text) OR ((field)::text = 'gender'::text) OR ((field)::text = 'interaction_count'::text) OR ((field)::text = 'interacted_at'::text) OR ((field)::text = 'user_created_at'::text) OR ((field)::text = 'followed_link'::text) OR ((field)::text ~~ 'dashboard:%'::text))) OR (((provider)::text = 'kik'::text) AND (((field)::text = 'first_name'::text) OR ((field)::text = 'last_name'::text) OR ((field)::text = 'interaction_count'::text) OR ((field)::text = 'interacted_at'::text) OR ((field)::text = 'user_created_at'::text) OR ((field)::text = 'followed_link'::text) OR ((field)::text ~~ 'dashboard:%'::text))) OR (((provider)::text = 'first_opinion'::text) AND (((field)::text = 'name'::text) OR ((field)::text = 'interaction_count'::text) OR ((field)::text = 'interacted_at'::text) OR ((field)::text = 'user_created_at'::text) OR ((field)::text ~~ 'dashboard:%'::text))))),
+    CONSTRAINT validate_method CHECK (((((provider)::text = 'slack'::text) AND (((field)::text = 'nickname'::text) OR ((field)::text = 'email'::text) OR ((field)::text = 'full_name'::text) OR ((field)::text = 'followed_link'::text)) AND (((method)::text = 'equals_to'::text) OR ((method)::text = 'contains'::text))) OR ((((provider)::text = 'facebook'::text) OR ((provider)::text = 'kik'::text)) AND (((field)::text = 'first_name'::text) OR ((field)::text = 'last_name'::text) OR ((field)::text = 'followed_link'::text)) AND (((method)::text = 'equals_to'::text) OR ((method)::text = 'contains'::text))) OR (((provider)::text = 'facebook'::text) AND ((field)::text = 'gender'::text) AND (((method)::text = 'equals_to'::text) OR ((method)::text = 'contains'::text))) OR ((((provider)::text = 'slack'::text) OR ((provider)::text = 'facebook'::text) OR ((provider)::text = 'kik'::text) OR ((provider)::text = 'first_opinion'::text)) AND ((field)::text = 'interaction_count'::text) AND (((method)::text = 'equals_to'::text) OR ((method)::text = 'between'::text) OR ((method)::text = 'greater_than'::text) OR ((method)::text = 'lesser_than'::text))) OR ((((provider)::text = 'slack'::text) OR ((provider)::text = 'facebook'::text) OR ((provider)::text = 'kik'::text) OR ((provider)::text = 'first_opinion'::text)) AND (((field)::text = 'interacted_at'::text) OR ((field)::text = 'user_created_at'::text) OR ((field)::text ~~ 'dashboard:%'::text)) AND (((method)::text = 'between'::text) OR ((method)::text = 'greater_than'::text) OR ((method)::text = 'lesser_than'::text)))))
 );
 
 
@@ -866,133 +869,133 @@ ALTER SEQUENCE webhook_events_id_seq OWNED BY webhook_events.id;
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: bot_collaborators id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY bot_collaborators ALTER COLUMN id SET DEFAULT nextval('bot_collaborators_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: bot_instances id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY bot_instances ALTER COLUMN id SET DEFAULT nextval('bot_instances_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: bot_users id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY bot_users ALTER COLUMN id SET DEFAULT nextval('bot_users_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: bots id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY bots ALTER COLUMN id SET DEFAULT nextval('bots_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: dashboard_events id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY dashboard_events ALTER COLUMN id SET DEFAULT nextval('dashboard_events_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: dashboards id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY dashboards ALTER COLUMN id SET DEFAULT nextval('dashboards_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: events id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY events ALTER COLUMN id SET DEFAULT nextval('events_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: funnels id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY funnels ALTER COLUMN id SET DEFAULT nextval('funnels_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: messages id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY messages ALTER COLUMN id SET DEFAULT nextval('messages_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: notifications id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY notifications ALTER COLUMN id SET DEFAULT nextval('notifications_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: queries id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY queries ALTER COLUMN id SET DEFAULT nextval('queries_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: query_sets id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY query_sets ALTER COLUMN id SET DEFAULT nextval('query_sets_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: rolledup_event_queue id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY rolledup_event_queue ALTER COLUMN id SET DEFAULT nextval('rolledup_event_queue_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: rolledup_events id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY rolledup_events ALTER COLUMN id SET DEFAULT nextval('rolledup_events_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: settings id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY settings ALTER COLUMN id SET DEFAULT nextval('settings_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: short_links id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY short_links ALTER COLUMN id SET DEFAULT nextval('short_links_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY users ALTER COLUMN id SET DEFAULT nextval('users_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: webhook_events id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY webhook_events ALTER COLUMN id SET DEFAULT nextval('webhook_events_id_seq'::regclass);
 
 
 --
--- Name: bot_collaborators_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: bot_collaborators bot_collaborators_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY bot_collaborators
@@ -1000,7 +1003,7 @@ ALTER TABLE ONLY bot_collaborators
 
 
 --
--- Name: bot_instances_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: bot_instances bot_instances_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY bot_instances
@@ -1008,7 +1011,7 @@ ALTER TABLE ONLY bot_instances
 
 
 --
--- Name: bot_users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: bot_users bot_users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY bot_users
@@ -1016,7 +1019,7 @@ ALTER TABLE ONLY bot_users
 
 
 --
--- Name: bots_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: bots bots_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY bots
@@ -1024,7 +1027,7 @@ ALTER TABLE ONLY bots
 
 
 --
--- Name: dashboard_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: dashboard_events dashboard_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY dashboard_events
@@ -1032,7 +1035,7 @@ ALTER TABLE ONLY dashboard_events
 
 
 --
--- Name: dashboards_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: dashboards dashboards_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY dashboards
@@ -1040,7 +1043,7 @@ ALTER TABLE ONLY dashboards
 
 
 --
--- Name: events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: events events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY events
@@ -1048,7 +1051,7 @@ ALTER TABLE ONLY events
 
 
 --
--- Name: funnels_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: funnels funnels_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY funnels
@@ -1056,7 +1059,7 @@ ALTER TABLE ONLY funnels
 
 
 --
--- Name: messages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: messages messages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY messages
@@ -1064,7 +1067,7 @@ ALTER TABLE ONLY messages
 
 
 --
--- Name: notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY notifications
@@ -1072,7 +1075,7 @@ ALTER TABLE ONLY notifications
 
 
 --
--- Name: queries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: queries queries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY queries
@@ -1080,7 +1083,7 @@ ALTER TABLE ONLY queries
 
 
 --
--- Name: query_sets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: query_sets query_sets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY query_sets
@@ -1088,7 +1091,7 @@ ALTER TABLE ONLY query_sets
 
 
 --
--- Name: rolledup_event_queue_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: rolledup_event_queue rolledup_event_queue_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY rolledup_event_queue
@@ -1096,7 +1099,7 @@ ALTER TABLE ONLY rolledup_event_queue
 
 
 --
--- Name: rolledup_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: rolledup_events rolledup_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY rolledup_events
@@ -1104,7 +1107,7 @@ ALTER TABLE ONLY rolledup_events
 
 
 --
--- Name: settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: settings settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY settings
@@ -1112,7 +1115,7 @@ ALTER TABLE ONLY settings
 
 
 --
--- Name: short_links_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: short_links short_links_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY short_links
@@ -1120,7 +1123,7 @@ ALTER TABLE ONLY short_links
 
 
 --
--- Name: users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY users
@@ -1128,7 +1131,7 @@ ALTER TABLE ONLY users
 
 
 --
--- Name: webhook_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: webhook_events webhook_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY webhook_events
@@ -1314,7 +1317,7 @@ CREATE INDEX index_events_on_event_type ON events USING btree (event_type);
 -- Name: index_events_on_event_type_and_bot_instance_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_events_on_event_type_and_bot_instance_id ON events USING btree (event_type, bot_instance_id) WHERE ((event_type)::text = ANY ((ARRAY['bot-installed'::character varying, 'bot_disabled'::character varying])::text[]));
+CREATE UNIQUE INDEX index_events_on_event_type_and_bot_instance_id ON events USING btree (event_type, bot_instance_id) WHERE ((event_type)::text = ANY (ARRAY[('bot-installed'::character varying)::text, ('bot_disabled'::character varying)::text]));
 
 
 --
@@ -1409,13 +1412,6 @@ CREATE INDEX index_rolledup_events_on_created_at_and_dashboard_id ON rolledup_ev
 
 
 --
--- Name: index_settings_on_key; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_settings_on_key ON settings USING btree (key);
-
-
---
 -- Name: index_rolledup_events_on_created_at_did_buid; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1427,6 +1423,13 @@ CREATE INDEX index_rolledup_events_on_created_at_did_buid ON rolledup_events USI
 --
 
 CREATE INDEX index_rolledup_events_on_dashboard_id_and_bot_user_id ON rolledup_events USING btree (dashboard_id, bot_user_id);
+
+
+--
+-- Name: index_settings_on_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_settings_on_key ON settings USING btree (key);
 
 
 --
@@ -1500,21 +1503,21 @@ CREATE UNIQUE INDEX unique_schema_migrations ON schema_migrations USING btree (v
 
 
 --
--- Name: custom_event_insert; Type: TRIGGER; Schema: public; Owner: -
+-- Name: dashboard_events custom_event_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER custom_event_insert AFTER INSERT ON dashboard_events FOR EACH ROW EXECUTE PROCEDURE custom_append_to_rolledup_events_queue();
 
 
 --
--- Name: event_insert; Type: TRIGGER; Schema: public; Owner: -
+-- Name: events event_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER event_insert AFTER INSERT ON events FOR EACH ROW EXECUTE PROCEDURE append_to_rolledup_events_queue();
 
 
 --
--- Name: fk_rails_03b178e1df; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: webhook_events fk_rails_03b178e1df; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY webhook_events
@@ -1522,7 +1525,7 @@ ALTER TABLE ONLY webhook_events
 
 
 --
--- Name: fk_rails_25c1a73cbc; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: short_links fk_rails_25c1a73cbc; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY short_links
@@ -1530,7 +1533,7 @@ ALTER TABLE ONLY short_links
 
 
 --
--- Name: fk_rails_5c55b12a98; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: short_links fk_rails_5c55b12a98; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY short_links
@@ -1538,7 +1541,7 @@ ALTER TABLE ONLY short_links
 
 
 --
--- Name: fk_rails_6897853d8c; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: bot_instances fk_rails_6897853d8c; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY bot_instances
@@ -1546,7 +1549,7 @@ ALTER TABLE ONLY bot_instances
 
 
 --
--- Name: fk_rails_6931938b29; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: notifications fk_rails_6931938b29; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY notifications
@@ -1554,7 +1557,7 @@ ALTER TABLE ONLY notifications
 
 
 --
--- Name: fk_rails_6e79174e50; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: events fk_rails_6e79174e50; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY events
@@ -1562,7 +1565,7 @@ ALTER TABLE ONLY events
 
 
 --
--- Name: fk_rails_8c888664b2; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: bot_collaborators fk_rails_8c888664b2; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY bot_collaborators
@@ -1570,7 +1573,7 @@ ALTER TABLE ONLY bot_collaborators
 
 
 --
--- Name: fk_rails_8cb1930a1d; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: dashboards fk_rails_8cb1930a1d; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY dashboards
@@ -1578,7 +1581,7 @@ ALTER TABLE ONLY dashboards
 
 
 --
--- Name: fk_rails_9fc3b26d0b; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: events fk_rails_9fc3b26d0b; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY events
@@ -1586,7 +1589,7 @@ ALTER TABLE ONLY events
 
 
 --
--- Name: fk_rails_c18d553428; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: funnels fk_rails_c18d553428; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY funnels
@@ -1594,7 +1597,7 @@ ALTER TABLE ONLY funnels
 
 
 --
--- Name: fk_rails_cbba591a9a; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: messages fk_rails_cbba591a9a; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY messages
@@ -1602,7 +1605,7 @@ ALTER TABLE ONLY messages
 
 
 --
--- Name: fk_rails_d232307517; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: bot_users fk_rails_d232307517; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY bot_users
@@ -1610,7 +1613,7 @@ ALTER TABLE ONLY bot_users
 
 
 --
--- Name: fk_rails_d9f77fff58; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: bot_collaborators fk_rails_d9f77fff58; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY bot_collaborators
@@ -1618,7 +1621,7 @@ ALTER TABLE ONLY bot_collaborators
 
 
 --
--- Name: fk_rails_dbec2a54ad; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: dashboards fk_rails_dbec2a54ad; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY dashboards
@@ -1626,7 +1629,7 @@ ALTER TABLE ONLY dashboards
 
 
 --
--- Name: fk_rails_eb0a01482e; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: funnels fk_rails_eb0a01482e; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY funnels
@@ -1637,7 +1640,7 @@ ALTER TABLE ONLY funnels
 -- PostgreSQL database dump complete
 --
 
-SET search_path TO "$user", public;
+SET search_path TO public;
 
 INSERT INTO schema_migrations (version) VALUES ('20160421235326');
 
@@ -1904,4 +1907,20 @@ INSERT INTO schema_migrations (version) VALUES ('20161221182154');
 INSERT INTO schema_migrations (version) VALUES ('20170103192442');
 
 INSERT INTO schema_migrations (version) VALUES ('20170103195117');
+
+INSERT INTO schema_migrations (version) VALUES ('20170627101104');
+
+INSERT INTO schema_migrations (version) VALUES ('20170627101441');
+
+INSERT INTO schema_migrations (version) VALUES ('20170627101909');
+
+INSERT INTO schema_migrations (version) VALUES ('20170627103648');
+
+INSERT INTO schema_migrations (version) VALUES ('20170627104507');
+
+INSERT INTO schema_migrations (version) VALUES ('20170627105444');
+
+INSERT INTO schema_migrations (version) VALUES ('20170627111841');
+
+INSERT INTO schema_migrations (version) VALUES ('20170627112215');
 

@@ -1,6 +1,7 @@
 class BotInstancesController < ApplicationController
   before_action :authenticate_user!
   before_action :find_bot
+  before_action :validate_instance
 
   layout 'app'
 
@@ -74,5 +75,11 @@ class BotInstancesController < ApplicationController
 
   def update_instance_params
     params.require(:instance).permit(:token)
+  end
+
+  def validate_instance
+    if @bot.provider == 'first_opinion' && @bot.instances.enabled.count > 0
+      redirect_to bot_path(@bot)
+    end
   end
 end

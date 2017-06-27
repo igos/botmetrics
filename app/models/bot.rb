@@ -2,11 +2,13 @@ class Bot < ActiveRecord::Base
   include WithUidUniqueness
 
   validates_presence_of  :name, :provider
+  after_create :create_bi_if_first_opinion!
 
   PROVIDERS = {
     'facebook' => true,
     'slack' => true,
     'kik' => true,
+    'first_opinion' => true,
     'telegram' => false,
     'amazon' => false
   }
@@ -62,5 +64,9 @@ class Bot < ActiveRecord::Base
         self.update_attribute(:first_received_event_at, Time.now)
       end
     end
+  end
+
+  def create_bi_if_first_opinion!
+    instances.create(provider: self.provider, bot_id: self.id, uid: SecureRandom.hex, state: 'enabled')
   end
 end

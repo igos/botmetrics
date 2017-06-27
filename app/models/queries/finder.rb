@@ -8,6 +8,8 @@ module Queries
           Queries::Facebook.new
         when 'kik'
           Queries::Kik.new
+        when 'first_opinion'
+          Queries::FirstOpinion.new
         else
           Queries::Null.new
       end
