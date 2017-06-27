@@ -19,7 +19,7 @@
             %td= bot_user.first_name
             %td= bot_user.last_name
             - if !@show_steps
-              %td= "#{time_ago_in_words(user.created_at)} ago"
+              %td= "#{time_ago_in_words(bot_user.created_at)} ago"
             - if @show_steps
               %td= bot_user.last_event.try(:in_words)
               %td= bot_user.step_count
