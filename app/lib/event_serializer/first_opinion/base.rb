@@ -11,9 +11,8 @@ class EventSerializer::FirstOpinion::Base
 
   protected
   def recip_info
-    user_type = @data[:user][:type]
-    if user_type == 'user'
-      user = @data[:user]
+    user = @data[:user]
+    if user[:type] == 'user'
       {
         name: user[:name],
         type: user[:type],
@@ -27,8 +26,8 @@ class EventSerializer::FirstOpinion::Base
       }
     else
       {
-        name: @data[:user][:name],
-        type: user_type,
+        name: user[:name],
+        type: user[:type],
         token: user[:token]
       }
     end

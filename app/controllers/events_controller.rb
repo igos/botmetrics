@@ -14,6 +14,8 @@ class EventsController < ApplicationController
       FacebookEventsCollectorJob.perform_async(@bot.uid, params[:event])
     when 'kik'
       KikEventsCollectorJob.perform_async(@bot.uid, params[:event])
+    when 'first_opinion'
+      FirstOpinionEventsCollectorJob.perform_async(@bot.uid, params[:event])
     end
 
     render nothing: true, status: :accepted
@@ -37,6 +39,11 @@ class EventsController < ApplicationController
     when 'kik'
       if !event.is_a?(Array)
         @error = "Invalid Kik Event Data"
+        raise BadEventError
+      end
+    when 'first_opinion'
+      if !event.is_a?(Array)
+        @error = "Invalid First Opinion Event Data"
         raise BadEventError
       end
     end

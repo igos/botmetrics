@@ -1,6 +1,6 @@
 class Event < ActiveRecord::Base
   validates_presence_of  :event_type, :bot_instance_id, :provider
-  validates_inclusion_of :provider, in: %w(slack kik facebook telegram)
+  validates_inclusion_of :provider, in: %w(slack kik facebook telegram first_opinion)
 
   belongs_to :user, foreign_key: 'bot_user_id', class_name: 'BotUser'
   belongs_to :bot_instance

@@ -8,6 +8,10 @@ class AddFirstOpinionToEvents < ActiveRecord::Migration
     execute "ALTER TABLE events DROP CONSTRAINT IF EXISTS validate_attributes_channel"
     execute "ALTER TABLE events DROP CONSTRAINT IF EXISTS validate_attributes_timestamp"
     execute "ALTER TABLE events DROP CONSTRAINT IF EXISTS validate_attributes_reaction"
+    execute "ALTER TABLE events DROP CONSTRAINT IF EXISTS valid_provider_on_events"
+
+    execute "ALTER TABLE events ADD CONSTRAINT valid_provider_on_events CHECK (provider = 'slack' OR provider = 'kik' OR provider = 'facebook' OR provider = 'telegram' OR provider = 'first_opinion')"
+
     execute "ALTER TABLE events ADD CONSTRAINT validate_attributes_channel
                    CHECK (
                            (
@@ -111,10 +115,10 @@ class AddFirstOpinionToEvents < ActiveRecord::Migration
                            (
                              (event_attributes->>'id') IS NOT NULL
                              AND length(event_attributes->>'id') > 0
-                             AND provider IN ('kik', 'first_opinion')
+                             AND provider = 'kik'
                            )
                            OR
-                             provider IN ('facebook', 'slack', 'kik')
+                             provider IN ('facebook', 'slack', 'kik', 'first_opinion')
                          )"
 
     execute "ALTER TABLE events ADD CONSTRAINT valid_event_type_on_events
@@ -149,6 +153,10 @@ class AddFirstOpinionToEvents < ActiveRecord::Migration
     execute "ALTER TABLE events DROP CONSTRAINT IF EXISTS validate_attributes_channel"
     execute "ALTER TABLE events DROP CONSTRAINT IF EXISTS validate_attributes_timestamp"
     execute "ALTER TABLE events DROP CONSTRAINT IF EXISTS validate_attributes_reaction"
+    execute "ALTER TABLE events DROP CONSTRAINT IF EXISTS valid_provider_on_events"
+
+    execute "ALTER TABLE events ADD CONSTRAINT valid_provider_on_events CHECK (provider = 'slack' OR provider = 'kik' OR provider = 'facebook' OR provider = 'telegram')"
+
     execute "ALTER TABLE events ADD CONSTRAINT validate_attributes_channel
                    CHECK (
                            (

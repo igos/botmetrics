@@ -6,6 +6,6 @@ class NullTokenForFirstOpinionInBotInstances < ActiveRecord::Migration
 
   def down
     execute "ALTER TABLE bot_instances DROP CONSTRAINT IF EXISTS not_null_token_on_bot_instances"
-    execute "ALTER TABLE bot_instances ALTER token NOT NULL"
+    execute "ALTER TABLE bot_instances ALTER token SET NOT NULL"
   end
 end
