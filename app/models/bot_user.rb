@@ -36,6 +36,34 @@ class BotUser < ActiveRecord::Base
     )
   end
 
+  scope :user_attributes_number, ->(field, values, eq) do
+    begin
+      if values.is_a? Array
+        Integer(values.first)
+        Integer(values.last)
+      else
+        Integer(values)
+      end
+    rescue
+      return self.none
+    end
+
+    if eq == 'between'
+      where(
+        "CAST(bot_users.user_attributes->>:field AS int) BETWEEN CAST(:val1 AS int) AND CAST(:val2 AS int)",
+        field: field,
+        val1: values.first,
+        val2: values.last
+      )
+    else
+      where(
+        "CAST(bot_users.user_attributes->>:field AS int) #{eq} CAST(:values AS int)",
+        field: field,
+        values: values
+      )
+    end
+  end
+
   scope :interaction_count_eq, ->(count)do
     where("bot_interaction_count = ?", count)
   end

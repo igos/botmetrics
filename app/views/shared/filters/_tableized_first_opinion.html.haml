@@ -1,0 +1,37 @@
+.row
+  .col-xs-12
+    %table.table.table-striped.tableized
+      %thead
+        %tr
+          %th Type
+          %th Name
+          %th Age
+          %th State
+          %th Gender
+          %th IP city
+          %th IP state
+          %th IP country
+          - if !@show_steps
+            %th Signed Up
+          - if @show_steps
+            %th Last Step
+            %th Number of Steps
+          %th Last Interacted With Bot
+      %tbody
+        - tableized.each do |bot_user|
+          %tr{class: bot_user.id}
+            %td= bot_user.membership_type
+            %td= bot_user.user_attributes['name']
+            %td= bot_user.user_attributes['age'] || '-'
+            %td= bot_user.user_attributes['state'] || '-'
+            %td= bot_user.user_attributes['gender'] || '-'
+            %td= bot_user.user_attributes['ip_city'] || '-'
+            %td= bot_user.user_attributes['ip_state'] || '-'
+            %td= bot_user.user_attributes['ip_country'] || '-'
+            - if !@show_steps
+              %td= "#{time_ago_in_words(bot_user.created_at)} ago"
+            - if @show_steps
+              %td= bot_user.last_event.try(:in_words)
+              %td= bot_user.step_count
+            %td= bot_user.last_interacted_with_bot_at.present? ? "#{time_ago_in_words(bot_user.last_interacted_with_bot_at)} ago" : '-'
+    = will_paginate tableized, renderer: BootstrapPagination::Rails

@@ -38,14 +38,14 @@ class App.Filter extends App.AppBase
         parent = $(@).closest('.query')
 
         switch
-          when $(@).val() in ['nickname', 'email', 'full_name', 'first_name', 'last_name', 'gender', 'ref']
+          when $(@).val() in ['nickname', 'email', 'full_name', 'first_name', 'last_name', 'gender', 'ref', 'name', 'membership_type', 'state', 'ip_city', 'ip_state', 'ip_country']
             enable(parent, '.string-method')
 
             disable(parent, '.number-method')
             disable(parent, '.datetime-method')
             disable(parent, '.ago-method')
 
-          when $(@).val() in ['interaction_count']
+          when $(@).val() in ['interaction_count', 'age']
             enable(parent, '.number-method')
 
             disable(parent, '.string-method')

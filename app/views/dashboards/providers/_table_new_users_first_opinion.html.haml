@@ -1,0 +1,12 @@
+%table.table.table-striped.tableized
+  %thead
+    %tr
+      %th Name
+      %th Type
+      %th Signed Up
+  %tbody
+    - tableized.each do |u|
+      %tr{class: u.id}
+        %td= u.user_attributes['name']
+        %td= u.membership_type
+        %td= "#{time_ago_in_words(u.created_at)} ago"

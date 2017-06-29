@@ -1,0 +1,36 @@
+- if @dashboard.dashboard_type == 'messages-to-bot'
+  %table.table.table-striped.tableized
+    %thead
+      %tr
+        %th Name
+        %th Age
+        %th State
+        %th Gender
+        %th IP city
+        %th IP state
+        %th IP country
+        %th Signed Up
+        %th Last Interacted with Bot
+    %tbody
+      - tableized.each do |u|
+        %tr{class: u.id}
+          %td= u.user_attributes['name']
+          %td= u.user_attributes['age']
+          %td= u.user_attributes['state']
+          %td= u.user_attributes['gender']
+          %td= u.user_attributes['ip_city']
+          %td= u.user_attributes['ip_state']
+          %td= u.user_attributes['ip_country']
+          %td= "#{time_ago_in_words(u.created_at)} ago"
+          %td= u.last_interacted_with_bot_at.present? ? "#{time_ago_in_words(u.last_interacted_with_bot_at)} ago" : 'no messages yet'
+- else
+  %table.table.table-striped.tableized
+    %thead
+      %tr
+        %th Name
+        %th Signed Up
+    %tbody
+      - tableized.each do |u|
+        %tr{class: u.id}
+          %td= u.user_attributes['name']
+          %td= "#{time_ago_in_words(u.created_at)} ago"

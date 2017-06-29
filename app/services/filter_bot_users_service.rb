@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-
 class FilterBotUsersService
   def initialize(query_set)
     @query_set = query_set
@@ -56,20 +55,39 @@ class FilterBotUsersService
 
   # Currently only for interaction_count
   def chain_with_number_query(collection, query)
-    case
-      when query.method == 'equals_to'
-        collection.interaction_count_eq(query.value)
-      when query.method == 'lesser_than'
-        collection.interaction_count_lt(query.value)
-      when query.method == 'greater_than'
-        collection.interaction_count_gt(query.value)
-      when query.method == 'between'
-        collection.interaction_count_betw(
-          query.min_value,
-          query.max_value
-        )
-      else
-        collection
+    if %W(age).include?(query.field)
+      case
+        when query.method == 'equals_to'
+          collection.user_attributes_number(query.field, query.value, '=')
+        when query.method == 'lesser_than'
+          collection.user_attributes_number(query.field, query.value, '<')
+        when query.method == 'greater_than'
+          collection.user_attributes_number(query.field, query.value, '>')
+        when query.method == 'between'
+          collection.user_attributes_number(
+            query.field,
+            [query.min_value, query.max_value],
+            'between'
+          )
+        else
+          collection
+      end
+    else
+      case
+        when query.method == 'equals_to'
+          collection.interaction_count_eq(query.value)
+        when query.method == 'lesser_than'
+          collection.interaction_count_lt(query.value)
+        when query.method == 'greater_than'
+          collection.interaction_count_gt(query.value)
+        when query.method == 'between'
+          collection.interaction_count_betw(
+            query.min_value,
+            query.max_value
+          )
+        else
+          collection
+      end
     end
   end
 
