@@ -1,4 +1,4 @@
-- if @dashboard.dashboard_type == 'messages-to-bot'
+- if @dashboard.dashboard_type == 'messages-to-bot' || @dashboard.dashboard_type == 'custom'
   %table.table.table-striped.tableized
     %thead
       %tr
@@ -17,19 +17,19 @@
     %tbody
       - tableized.each do |u|
         %tr{class: u.id}
-          %td= u.user_attributes['name']
-          %td= u.user_attributes['age']
-          %td= u.user_attributes['parent']
-          %td= u.user_attributes['room_token']
-          %td= u.user_attributes['state']
-          %td= u.user_attributes['gender']
-          %td= u.user_attributes['ip_city']
-          %td= u.user_attributes['ip_state']
-          %td= u.user_attributes['ip_country']
-          %td= Date.parse(u.user_attributes['created'])
+          %td= u.user_attributes['name'] || '-'
+          %td= u.user_attributes['age'] || '-'
+          %td= u.user_attributes['parent'] || '-'
+          %td= u.user_attributes['room_token'] || '-'
+          %td= u.user_attributes['state'] || '-'
+          %td= u.user_attributes['gender'] || '-'
+          %td= u.user_attributes['ip_city'] || '-'
+          %td= u.user_attributes['ip_state'] || '-'
+          %td= u.user_attributes['ip_country'] || '-'
+          %td= u.user_attributes['created'].present? ? Date.parse(u.user_attributes['created']) : '-'
           %td= "#{time_ago_in_words(u.created_at)} ago"
           %td= u.last_interacted_with_bot_at.present? ? "#{time_ago_in_words(u.last_interacted_with_bot_at)} ago" : 'no messages yet'
-- else
+- elsif @dashboard.dashboard_type == 'messages-from-bot'
   %table.table.table-striped.tableized
     %thead
       %tr

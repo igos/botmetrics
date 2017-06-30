@@ -33,7 +33,7 @@
             %td= bot_user.user_attributes['ip_city'] || '-'
             %td= bot_user.user_attributes['ip_state'] || '-'
             %td= bot_user.user_attributes['ip_country'] || '-'
-            %td= Date.parse(bot_user.user_attributes['created']) || '-'
+            %td= bot_user.user_attributes['created'].present? ? Date.parse(bot_user.user_attributes['created']) : '-'
             - if !@show_steps
               %td= "#{time_ago_in_words(bot_user.created_at)} ago"
             - if @show_steps

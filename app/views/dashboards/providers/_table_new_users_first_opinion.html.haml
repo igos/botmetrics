@@ -1,12 +1,32 @@
 %table.table.table-striped.tableized
   %thead
     %tr
-      %th Name
       %th Type
+      %th Name
+      %th Age
+      %th Parent
+      %th Room token
+      %th State
+      %th Gender
+      %th IP city
+      %th IP state
+      %th IP country
+      %th Created
       %th Signed Up
+      %th Last Interacted with Bot
   %tbody
     - tableized.each do |u|
       %tr{class: u.id}
-        %td= u.user_attributes['name']
-        %td= u.membership_type
+        %td= u.membership_type || '-'
+        %td= u.user_attributes['name'] || '-'
+        %td= u.user_attributes['age'] || '-'
+        %td= u.user_attributes['parent'] || '-'
+        %td= u.user_attributes['room_token'] || '-'
+        %td= u.user_attributes['state'] || '-'
+        %td= u.user_attributes['gender'] || '-'
+        %td= u.user_attributes['ip_city'] || '-'
+        %td= u.user_attributes['ip_state'] || '-'
+        %td= u.user_attributes['ip_country'] || '-'
+        %td= u.user_attributes['created'].present? ? Date.parse(u.user_attributes['created']) : '-'
         %td= "#{time_ago_in_words(u.created_at)} ago"
+        %td= u.last_interacted_with_bot_at.present? ? "#{time_ago_in_words(u.last_interacted_with_bot_at)} ago" : 'no messages yet'

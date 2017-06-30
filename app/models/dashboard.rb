@@ -23,6 +23,8 @@ class Dashboard < ActiveRecord::Base
   has_many :rolledup_events
   has_many :raw_events, through: :dashboard_events, source: :event
 
+  after_create :fill_custom_dashboard
+
   scope :custom, -> { where("dashboards.dashboard_type" => 'custom') }
   scope :enabled, -> { where("dashboards.enabled" => true) }
   scope :for_funnels, -> { where("dashboards.dashboard_type NOT IN (?)", ['bots-installed', 'bots-uninstalled', 'messages', 'messages-from-bot']).order(:id) }
@@ -221,6 +223,12 @@ class Dashboard < ActiveRecord::Base
     when 'file-uploaded'  then 'File Uploads'
     when 'location-sent'  then 'Locations Shared'
     else type.titleize
+    end
+  end
+
+  def fill_custom_dashboard
+    if self.dashboard_type == 'custom'
+      FillCustomDashboardJob.perform_async(self.id)
     end
   end
 end
