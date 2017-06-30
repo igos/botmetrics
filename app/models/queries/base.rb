@@ -44,7 +44,7 @@ module Queries
     end
 
     def is_datetime_query?(field)
-      field.in?(['interacted_at', 'user_created_at']) || field.match(/\Adashboard:[0-9a-f]+\Z/).present?
+      field.in?(['interacted_at', 'user_created_at', 'created']) || field.match(/\Adashboard:[0-9a-f]+\Z/).present?
     end
 
     def fields(bot)

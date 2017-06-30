@@ -5,6 +5,9 @@ module Queries
       'name'        => 'Name',
       'age'        => 'Age',
       'state'        => 'State',
+      'parent'        => 'Parent',
+      'room_token'        => 'Room token',
+      'created'        => 'User created date',
       'gender'        => 'Gender',
       'ip_city'        => 'IP city',
       'ip_state'        => 'IP state',
@@ -15,7 +18,7 @@ module Queries
     }
 
     def is_string_query?(field)
-      field.in?(['membership_type', 'name', 'state', 'gender', 'ip_city', 'ip_state', 'ip_country'])
+      field.in?(['parent', 'room_token', 'membership_type', 'name', 'state', 'gender', 'ip_city', 'ip_state', 'ip_country'])
     end
 
     def is_number_query?(field)

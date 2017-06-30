@@ -99,6 +99,8 @@ class FilterBotUsersService
                  :user_signed_up_betw
                elsif query.field == 'interacted_at'
                  :interacted_at_betw
+               elsif query.field == 'created'
+                 :custom_user_created_betw
                elsif query.field =~ /\Adashboard:[0-9a-f]+\Z/
                  :dashboard_betw
                end
@@ -117,6 +119,8 @@ class FilterBotUsersService
         query.method == 'greater_than' ? :user_signed_up_gt : :user_signed_up_lt
       elsif query.field == 'interacted_at'
         query.method == 'greater_than' ? :interacted_at_gt : :interacted_at_lt
+      elsif query.field == 'created'
+        query.method == 'greater_than' ? :custom_user_created_gt : :custom_user_created_lt
       elsif query.field =~ /\Adashboard:[0-9a-f]+\Z/
         query.method == 'greater_than' ? :dashboard_gt : :dashboard_lt
       end

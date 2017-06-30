@@ -38,7 +38,7 @@ class App.Filter extends App.AppBase
         parent = $(@).closest('.query')
 
         switch
-          when $(@).val() in ['nickname', 'email', 'full_name', 'first_name', 'last_name', 'gender', 'ref', 'name', 'membership_type', 'state', 'ip_city', 'ip_state', 'ip_country']
+          when $(@).val() in ['nickname', 'email', 'full_name', 'first_name', 'last_name', 'gender', 'ref', 'name', 'membership_type', 'state', 'ip_city', 'ip_state', 'ip_country', 'parent', 'room_token']
             enable(parent, '.string-method')
 
             disable(parent, '.number-method')
@@ -52,7 +52,7 @@ class App.Filter extends App.AppBase
             disable(parent, '.datetime-method')
             disable(parent, '.ago-method')
 
-          when $(@).val() in ['interacted_at', 'user_created_at']
+          when $(@).val() in ['interacted_at', 'user_created_at', 'created']
             enable(parent, '.datetime-method')
 
             disable(parent, '.string-method')
@@ -79,7 +79,7 @@ class App.Filter extends App.AppBase
             disable(parent, '.equal-value')
             disable(parent, '.ago-value')
           when $(@).val() in ['lesser_than', 'greater_than']
-            if field.val() in ['interacted_at', 'user_created_at'] || field.val().match(/^dashboard:[0-9a-f]+$/)
+            if field.val() in ['interacted_at', 'user_created_at', 'created'] || field.val().match(/^dashboard:[0-9a-f]+$/)
               enable(parent, '.ago-value')
               disable(parent, '.equal-value')
               disable(parent, '.range-value')
@@ -93,7 +93,7 @@ class App.Filter extends App.AppBase
             disable(parent, '.ago-value')
 
         if $(this).val() == 'between'
-          if field.val() in ['interacted_at', 'user_created_at'] || field.val().match(/^dashboard:[0-9a-f]+$/)
+          if field.val() in ['interacted_at', 'user_created_at', 'created'] || field.val().match(/^dashboard:[0-9a-f]+$/)
             enable_datepicker(parent, "[name$='_value]']:visible")
           else
             disable_datepicker(parent, "[name$='_value]']:visible")

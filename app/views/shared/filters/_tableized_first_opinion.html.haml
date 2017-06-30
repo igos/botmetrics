@@ -6,11 +6,14 @@
           %th Type
           %th Name
           %th Age
+          %th Parent
+          %th Room token
           %th State
           %th Gender
           %th IP city
           %th IP state
           %th IP country
+          %th Created
           - if !@show_steps
             %th Signed Up
           - if @show_steps
@@ -23,11 +26,14 @@
             %td= bot_user.membership_type
             %td= bot_user.user_attributes['name']
             %td= bot_user.user_attributes['age'] || '-'
+            %td= bot_user.user_attributes['parent'] || '-'
+            %td= bot_user.user_attributes['room_token'] || '-'
             %td= bot_user.user_attributes['state'] || '-'
             %td= bot_user.user_attributes['gender'] || '-'
             %td= bot_user.user_attributes['ip_city'] || '-'
             %td= bot_user.user_attributes['ip_state'] || '-'
             %td= bot_user.user_attributes['ip_country'] || '-'
+            %td= Date.parse(bot_user.user_attributes['created']) || '-'
             - if !@show_steps
               %td= "#{time_ago_in_words(bot_user.created_at)} ago"
             - if @show_steps

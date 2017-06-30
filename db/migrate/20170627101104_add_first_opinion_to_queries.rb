@@ -47,6 +47,15 @@ class AddFirstOpinionToQueries < ActiveRecord::Migration
         provider = 'first_opinion'
         AND (
           field = 'name'
+          OR field = 'age'
+          OR field = 'parent'
+          OR field = 'created'
+          OR field = 'state'
+          OR field = 'gender'
+          OR field = 'ip_city'
+          OR field = 'ip_state'
+          OR field = 'ip_country'
+          OR field = 'interaction_count'
           OR field = 'interaction_count'
           OR field = 'interacted_at'
           OR field = 'user_created_at'
@@ -97,6 +106,23 @@ class AddFirstOpinionToQueries < ActiveRecord::Migration
         )
         OR
         (
+          provider = 'first_opinion'
+          AND (
+            field = 'name'
+            OR field = 'state'
+            OR field = 'gender'
+            OR field = 'ip_city'
+            OR field = 'ip_state'
+            OR field = 'ip_country'
+            OR field = 'parent'
+          )
+          AND (
+            method = 'equals_to'
+            OR method = 'contains'
+          )
+        )
+        OR
+        (
           (
             provider = 'slack' OR
             provider = 'facebook' OR
@@ -105,6 +131,7 @@ class AddFirstOpinionToQueries < ActiveRecord::Migration
           )
           AND (
             field = 'interaction_count'
+            OR field = 'age'
           )
           AND (
             method = 'equals_to'
@@ -124,6 +151,7 @@ class AddFirstOpinionToQueries < ActiveRecord::Migration
           AND (
             field = 'interacted_at'
             OR field = 'user_created_at'
+            OR field = 'created'
             OR field LIKE 'dashboard:%'
           )
           AND (

@@ -85,6 +85,12 @@ class BotUser < ActiveRecord::Base
     order("last_interacted_with_bot_at DESC NULLS LAST")
   end
 
+  scope :custom_user_created_betw, ->(query, min, max) do
+    where("CAST(bot_users.user_attributes->>'created' AS date) BETWEEN ? AND ?", min, max).
+    order("bot_users.user_attributes->>'created' DESC NULLS LAST")
+
+  end
+
   scope :dashboard_betw, ->(query, min, max) do
     where(id: query.dashboard.events.where("rolledup_events.created_at" => min..max).select(:bot_user_id))
   end
@@ -113,6 +119,14 @@ class BotUser < ActiveRecord::Base
 
   scope :user_signed_up_lt, ->(query, days_ago) do
     where('created_at > ?', days_ago)
+  end
+
+  scope :custom_user_created_gt, ->(query, days_ago) do
+    where("CAST(bot_users.user_attributes->>'created' AS date) < ?", days_ago)
+  end
+
+  scope :custom_user_created_lt, ->(query, days_ago) do
+    where("CAST(bot_users.user_attributes->>'created' AS date) > ?", days_ago)
   end
 
   scope :user_signed_up_betw, ->(query, min, max) do
