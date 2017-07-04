@@ -14,7 +14,7 @@
       - if dashboard.custom?
         = button_to bot_dashboard_path(@bot, dashboard), method: :delete, remote: true, class: 'delete-dashboard', data: { confirm: 'Are you sure you want to disable this dashboard?', disable_with: '...' } do
           %i.fa.fa-trash
-      %h3= dashboard.name
+      %h3= dashboard.first_opinion_name
       - if @show_trends
         %div{id: "chart-#{dashboard.uid}", style: "height: 60px; width: 100%; text-align: center; color: #999; line-height: 60px; font-size: 14px; font-family: 'Lucida Grande', 'Lucida Sans Unicode', Verdana, Arial, Helvetica, sans-serif;"}
   .stat.col-sm-6.col-md-3.new-dashboard{class: @group_by, data: { ref: new_bot_dashboard_path(@bot) }}

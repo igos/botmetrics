@@ -135,6 +135,13 @@ class Dashboard < ActiveRecord::Base
     end
   end
 
+  def first_opinion_name
+    if provider == 'first_opinion' && ['messages-to-bot', 'messages-from-bot'].include?(dashboard_type)
+      return name.sub('Bot', 'Doctor')
+    end
+    return name
+  end
+
   private
   def instance_ids
     @_instance_ids ||= instances.select(:id)
