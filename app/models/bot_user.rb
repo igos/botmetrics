@@ -133,6 +133,10 @@ class BotUser < ActiveRecord::Base
     where(created_at: min..max)
   end
 
+  scope :type_user, -> (instance_id) do
+    where(membership_type: :user, bot_instance_id: instance_id)
+  end
+
   attr_accessor  :step_count, :last_event
 
   store_accessor :user_attributes, :nickname, :email, :full_name, :first_name, :last_name, :gender, :timezone, :ref

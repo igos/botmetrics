@@ -4,7 +4,7 @@ class Dashboard < ActiveRecord::Base
   DEFAULT_SLACK_DASHBOARDS    = %w(bots-installed followed-link bots-uninstalled new-users messages messages-to-bot messages-from-bot)
   DEFAULT_FACEBOOK_DASHBOARDS = %w(new-users followed-link messages-to-bot messages-from-bot user-actions image-uploaded audio-uploaded video-uploaded file-uploaded location-sent)
   DEFAULT_KIK_DASHBOARDS      = %w(new-users followed-link messages-to-bot messages-from-bot image-uploaded video-uploaded link-uploaded scanned-data sticker-uploaded friend-picker-chosen)
-  DEFAULT_FIRST_OPINION_DASHBOARDS      = %w(new-users messages-to-bot messages-from-bot)
+  DEFAULT_FIRST_OPINION_DASHBOARDS      = %w(new-users messages-to-bot messages-from-bot conversations)
 
   validates_presence_of :name, :bot_id, :user_id, :provider, :dashboard_type
   validates_presence_of :event_type, if: Proc.new { |d| d.dashboard_type != 'custom' }
@@ -48,7 +48,11 @@ class Dashboard < ActiveRecord::Base
            else 'all_count'
            end
 
-    @data = send(func, events)
+    if dashboard_type == 'conversations'
+      @data = send(func, BotUser.type_user(bot.instances.last.id), "CAST(bot_users.user_attributes->>'created' AS timestamp)")
+    else
+      @data = send(func, events)
+    end
     @tableized = events_tableized.page(page) if self.should_tableize
   end
 
@@ -60,8 +64,12 @@ class Dashboard < ActiveRecord::Base
     count_for(self.data)
   end
 
-  def all_count(events)
-    events.sum(:count).to_i
+  def all_count(events, column = nil)
+    if dashboard_type == 'conversations'
+      events.count
+    else
+      events.sum(:count).to_i
+    end
   end
 
   def action_name
@@ -95,6 +103,7 @@ class Dashboard < ActiveRecord::Base
   def set_event_type_and_query_options!
     self.event_type = case self.dashboard_type
                         when 'messages'             then 'message'
+                        when 'conversations'    then 'message'
                         when 'messages-from-bot'    then 'message'
                         when 'messages-to-bot'      then 'message'
                         when 'audio-uploaded'       then 'message:audio-uploaded'
@@ -148,6 +157,10 @@ class Dashboard < ActiveRecord::Base
   end
 
   def events_tableized
+    if dashboard_type == 'conversations'
+      return BotUser.type_user(bot.instances.last.id).where("CAST(user_attributes->>'created' AS timestamp) BETWEEN ? AND ?", @start_time.utc, @end_time.utc)
+    end
+
     events = self.events.where("rolledup_events.created_at" => @start_time.utc..@end_time.utc)
 
     case self.dashboard_type
@@ -170,19 +183,35 @@ class Dashboard < ActiveRecord::Base
   end
 
   def group_by_day(collection, group_col = :created_at)
-    collection.group_by_day(group_col, params).sum(:count).map { |k,v| [k, v.to_i] }.to_h
+    if dashboard_type == 'conversations'
+      collection.group_by_day(group_col, params).count.map { |k,v| [k, v.to_i] }.to_h
+    else
+      collection.group_by_day(group_col, params).sum(:count).map { |k,v| [k, v.to_i] }.to_h
+    end
   end
 
   def group_by_hour(collection, group_col = :created_at)
-    collection.group_by_hour(group_col, params).sum(:count).map { |k,v| [k, v.to_i] }.to_h
+    if dashboard_type == 'conversations'
+      collection.group_by_hour(group_col, params).count.map { |k,v| [k, v.to_i] }.to_h
+    else
+      collection.group_by_hour(group_col, params).sum(:count).map { |k,v| [k, v.to_i] }.to_h
+    end
   end
 
   def group_by_week(collection, group_col = :created_at)
-    collection.group_by_week(group_col, params).sum(:count).map { |k,v| [k, v.to_i] }.to_h
+    if dashboard_type == 'conversations'
+      collection.group_by_week(group_col, params).count.map { |k,v| [k, v.to_i] }.to_h
+    else
+      collection.group_by_week(group_col, params).sum(:count).map { |k,v| [k, v.to_i] }.to_h
+    end
   end
 
   def group_by_month(collection, group_col = :created_at)
-    collection.group_by_month(group_col, params).sum(:count).map { |k,v| [k, v.to_i] }.to_h
+    if dashboard_type == 'conversations'
+      collection.group_by_month(group_col, params).count.map { |k,v| [k, v.to_i] }.to_h
+    else
+      collection.group_by_month(group_col, params).sum(:count).map { |k,v| [k, v.to_i] }.to_h
+    end
   end
 
   def count_for(var)
